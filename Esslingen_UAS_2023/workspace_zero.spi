@@ -1,0 +1,71 @@
+# Metronome and control
+
+use_debug false
+
+if get[:bpm].nil? then
+  set :bpm, 128
+end
+use_bpm get[:bpm]
+
+set :run_metronome, true
+
+set :run_auto_drums, false
+set :run_hh_ticker, true
+
+set :run_hammer_bass, false
+set :run_bass_saw, false
+set :run_bass_foundation, false
+set :run_bass_long, false
+set :run_hammond, false
+set :run_ambient_choir, false
+
+set :run_arp, false
+set :run_squelch, false
+set :run_steps, false
+set :run_piano_hammer, false
+
+set :run_vocal_mlc, false
+set :run_vocal_mlc_fraction, false
+set :run_vocal_sosha_inside, false
+
+set :run_crowd_cheer, false
+
+set :run_drums_drop, false
+
+set :drumPattern, 1
+
+live_loop :metronome, auto_cue: false do
+  
+  if (get :run_metronome) then
+    
+    use_real_time
+    cue :quad_set
+    4.times do
+      cue :set
+      4.times do
+        cue :main_beat
+        sleep 1
+      end
+    end
+  else
+    sleep 1
+  end
+end
+
+live_loop :metronome, auto_cue: false do
+  
+  if (get :run_metronome) then
+    
+    use_real_time
+    cue :quad_set
+    4.times do
+      cue :set
+      4.times do
+        cue :main_beat
+        sleep 1
+      end
+    end
+  else
+    sleep 1
+  end
+end

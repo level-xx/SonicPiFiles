@@ -1,0 +1,153 @@
+# Drumline
+
+use_bpm get[:bpm]
+use_debug false
+
+smpl_kawai_tronic = load_sample "~/music/sonic_pi/drumkits/Kawai_XD-5_Kit/02 TronicKick.wav"
+smpl_clap = load_sample "~/music/sonic_pi/drumkits/Yamaha_TG-55_Kit/clap1.wav"
+smpl_roland_snare = load_sample "~/music/sonic_pi/drumkits/Roland_JD-990/JD-990\ Snare\ 3.wav"
+smpl_wolf_snare = load_sample "~/music/sonic_pi/Wolf/dance/ONESHOTS/4SN00016.WAV"
+smpl_roland_hhc = "~/music/sonic_pi/drumkits/Roland_JD-990/JD-990 Closed Hi-Hat 3_short.wav"
+
+def beats(pat)
+  pat.delete(' ').split('').map(&:to_i).ring
+end
+
+pat = [
+  {
+  },
+  {
+    :bd_haus =>            '2---',
+  },
+  {
+    :bd_haus =>            '2--- 2---',
+    smpl_clap =>           '---- 2---',
+    smpl_wolf_snare =>     '---- 2---',
+    #:drum_cymbal_pedal =>  '2-2- 2-2-',
+    #:drum_cymbal_closed => '2-2- 2-2-',
+  },
+  {
+    :bd_haus =>            '2--- 2---',
+    smpl_kawai_tronic=>    '7---',
+    #smpl_clap =>           '---- 2---',
+    #smpl_roland_snare =>   '6--- ----',
+    #smpl_wolf_snare =>     '---- 3---',
+    #:perc_swash =>         '2-2-',
+    #:drum_cymbal_pedal =>  '---- 7---',
+  },
+  {
+    :bd_haus =>            '9--- 9---',
+    :drum_snare_hard =>    '---- 2---',
+    smpl_clap =>           '---- 6---',
+  },
+  {
+    #:elec_filt_snare =>    '9--- ---- ---- ---- ---- ---- ---- ----',
+    #:misc_cineboom =>      '9--- ---- ---- ---- ---- ---- ---- ----',
+    :ambi_lunar_land =>    '9--- ---- ---- ---- ---- ---- ---- ----',
+  }
+]
+
+with_fx :reverb, mix: 0.4 do
+  
+  live_loop :auto_drums, auto_cue: false do
+    
+    sync :main_beat
+    
+    drumPattern = get :drumPattern
+    
+    if (get :run_auto_drums) then
+      
+      4.times do
+        
+        tick
+        
+        a = 1
+        #tick_reset_all
+        #a = line(0, 1, steps: 200).ramp.look # with tick_reset
+        
+        pat[drumPattern].each{|key, val|
+          sample key, amp: beats(val).look / 3.0 * a
+        }
+        if ((look+1)%4 != 0) then
+          sleep 0.25
+        end
+      end
+    end
+  end
+  
+  live_loop :hh_ticker, auto_cue: false do
+    
+    sync :main_beat
+    
+    if (get :run_hh_ticker) then
+      
+      4.times do
+        sample smpl_roland_hhc, amp: 3, finish: 0.25, hpf: 90, pan: 0 if !one_in(8) # Mod: hpf 70
+        sleep 0.249
+      end
+    end
+  end
+  
+  live_loop :drums_drop, auto_cue: false do
+    
+    #puts 'Waiting'
+    sync :quad_set
+    
+    if (get :run_drums_drop) then
+      
+      set :run_auto_drums, false
+      set :run_hh_ticker, false
+      set :run_bass_saw, false
+      set :run_bass_foundation, false
+      set :run_hammond, false
+      set :run_arp, false
+      set :run_vocal_mlc, false
+      set :run_vocal_mlc_fraction, false
+      
+      a = 3
+      sync :main_beat
+      
+      8.times do
+        sample smpl_kawai_tronic, amp: a
+        sleep 1
+      end
+      8.times do
+        sample smpl_kawai_tronic, amp: a
+        sleep 0.5
+      end
+      16.times do
+        sample smpl_kawai_tronic, amp: a
+        sleep 0.25
+      end
+      
+      set :run_crowd_cheer, true
+      
+      sleep 4
+      
+      2.times do
+        sample smpl_kawai_tronic, amp: a
+        sleep 0.25
+      end
+      
+      sleep 2
+      
+      3.times do
+        sample smpl_kawai_tronic, amp: a
+        sleep 0.25
+      end
+      
+      sleep 4
+      
+      5.times do
+        sample smpl_kawai_tronic, amp: a
+        sleep 0.25
+      end
+      
+      set :run_auto_drums, true
+      set :run_hh_ticker, true
+      set :run_hammer_bass, true
+      set :run_vocal_sosha_inside, true
+      set :run_drums_drop, false
+    end
+  end
+end

@@ -1,0 +1,194 @@
+# Bassline
+use_bpm get[:bpm]
+use_debug false
+
+cscale = scale(:a0, :major, num_octaves: 2)
+puts cscale
+
+notes = [cscale[7], cscale[4], cscale[3], cscale[4]].ring
+#notes = [cscale[7], cscale[6], cscale[4], cscale[4]].ring
+#notes = [cscale[7], cscale[9], cscale[6], cscale[7]].ring
+
+with_fx :reverb, mix: 0.4, auto_cue: false do
+  live_loop :hammer_bass, auto_cue: false do
+    
+    sync :quad_set
+    
+    if (get :run_hammer_bass) then
+      
+      tick_reset
+      use_synth :bass_foundation
+      
+      amp1 = 0.4
+      amp2 = 0.6
+      res = 0.7 # Mod up to 0.95
+      
+      intro = false
+      4.times do |i|
+        tick
+        
+        if (intro) then
+          4.times do
+            play notes.look, amp: amp1, sustain: 0.125, release: 0.3, res: res
+            synth :fm, amp: amp2, note: notes.look, sustain: 0.125, release: 0.3
+            sleep 0.25
+          end
+          play notes.look, amp: amp1, sustain: 2.5, release: 0.8, res: res
+          synth :fm, amp: amp2, note: notes.look, sustain: 2.5, release: 0.8
+          sleep 2.5
+        else
+          5.times do
+            play notes.look, amp: amp1, sustain: 0.125, release: 0.3, res: res
+            synth :fm, amp: amp2, note: notes.look, sustain: 0.125, release: 0.3
+            sleep 0.25
+          end
+          sleep 0.25
+          2.times do
+            play notes.look, amp: amp1, sustain: 0.125, release: 0.3, res: res
+            synth :fm, amp: amp2, note: notes.look, sustain: 0.125, release: 0.3
+            sleep 1
+          end
+        end
+        unless (i==3)
+          sleep 0.5
+        end
+      end
+    end
+  end
+  
+  live_loop :bass_saw, auto_cue: false do
+    
+    sync :quad_set
+    
+    if (get :run_bass_saw) then
+      
+      amp1 = 1.2
+      amp2 = 0.8
+      cutoff1 = 50
+      cutoff2 = 60 # Mod
+      
+      #tick_reset_all
+      cutoff_ramp = line(59, 60, steps: 200, inclusive: true).ramp
+      rel = 0.25
+      use_synth :saw
+      4.times do |i|
+        tick
+        16.times do |j|
+          #puts 'ramp cur:' + cutoff_ramp.tick(:cutoff_ramp).to_s
+          cutoff2 = cutoff_ramp.look(:cutoff_ramp)
+          play notes.look, cutoff: cutoff1, amp: amp1, release: rel
+          play notes.look+12, cutoff: cutoff2, amp: amp2, release: rel
+          unless ((i==3)&&(j==15))
+            sleep 0.25
+          end
+        end
+      end
+    end
+  end
+  
+  live_loop :bass_foundation, auto_cue: false do
+    
+    sync :quad_set
+    
+    if (get :run_bass_foundation) then
+      
+      amp1 = 0.8
+      amp2 = 0.2
+      cutoff1 = 50
+      cutoff2 = 70 # Mod 70-80, or comment out synth
+      rel = 0.25
+      4.times do |i|
+        tick
+        16.times do |j|
+          synth :bass_foundation, note: notes.look, amp: amp1, release: rel
+          synth :bass_highend, note: notes.look, amp: amp2, cutoff: cutoff2, release: rel
+          unless ((i==3)&&(j==15))
+            sleep 0.25
+          end
+        end
+      end
+    end
+  end
+  
+  live_loop :bass_long, auto_cue: false do
+    
+    sync :quad_set
+    
+    if (get :run_bass_long) then
+      
+      amp1 = 0.4
+      amp2 = 0.4
+      rel = 0.25
+      4.times do |i| # Mod: slicer FX
+        tick
+        # Mod: synths :hoover(note+24) / :fm(note+24) / :blade(note+0)
+        synth :fm, note: notes.look+24, amp: amp1, sustain: 4, release: rel
+        synth :fm, note: notes.look+12, amp: amp2, sustain: 4, release: rel
+        unless (i==3)
+          sleep 4
+        end
+      end
+    end
+  end
+  
+  live_loop :hammond, auto_cue: false do
+    
+    sync :quad_set
+    
+    if (get :run_hammond) then
+      use_synth_defaults bass: 0,
+        quint: 4,
+        fundamental: 8,
+        oct: 4,
+        nazard: 0,
+        blockflute: 0,
+        tierce: 0,
+        nazard: 0,
+        larigot: 6,
+        sifflute: 8,
+        rs_freq: 6.7,
+        rs_freq_var: 0.5,
+        rs_pitch_depth: 0.02,
+        rs_pan_depth: 0.2,
+        rs_delay: 0,
+        rs_onset: 0,
+        rs_amplitude_depth: 0.2,
+        amp: 0.125
+      amp1 = 0.8
+      amp2 = 0.6
+      rel = 0.1
+      with_fx :slicer, mix: 0.7 do
+        4.times do |i| # Mod: slicer FX
+          tick
+          synth :organ_tonewheel, note: notes.look, amp: amp1, sustain: 4, release: rel
+          synth :organ_tonewheel, note: notes.look+12, amp: amp2, sustain: 4, release: rel
+          unless (i==3)
+            sleep 4
+          end
+        end
+      end
+    end
+  end
+  
+  live_loop :ambient_choir, auto_cue: false do
+    
+    sync :quad_set
+    
+    if (get :run_ambient_choir) then
+      
+      amp1 = 4
+      amp2 = 0.4
+      cutoff1 = 50
+      cutoff2 = 70 # Mod 70-80, or comment out synth
+      rel = 1
+      
+      4.times do |i|
+        tick
+        synth :dark_ambience , note: notes.look+24, amp: amp1, attack: 0.5, sustain: 4, release: rel
+        unless (i==3)
+          sleep 4
+        end
+      end
+    end
+  end
+end

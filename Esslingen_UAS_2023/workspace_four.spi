@@ -1,0 +1,111 @@
+# Vocals
+
+use_bpm get[:bpm]
+use_debug false
+
+smpl_mylive_chorus = load_sample "~/music/sonic_pi/samples/CCMixter/Artelligence/MyLife_chorus.wav"
+smpl_inside_pre = load_sample "~/music/sonic_pi/samples/CCMixter/SO_SHA/Inside_Me/PRE_trimmed.wav"
+smpl_inside_chorus = load_sample "~/music/sonic_pi/samples/CCMixter/SO_SHA/Inside_Me/CHORUS_SHORT.aif"
+smpl_inside_verse1 = load_sample "~/music/sonic_pi/samples/CCMixter/SO_SHA/Inside_Me/VERSE1_02.aif"
+
+with_fx :reverb, mix: 0.6 do
+  
+  live_loop :vocal_mlc, auto_cue: false do
+    
+    sync :quad_set
+    
+    #tick_reset_all; puts 'Tick reset'
+    
+    if (get :run_vocal_mlc) then
+      
+      a = 1
+      amp_ramp = line(0, 1, steps: 25).ramp # with tick_reset
+      puts amp_ramp.tick
+      
+      # Mod: hpf: 90, lpf: 70
+      smpl_mlc = sample smpl_mylive_chorus, amp: a, start: 0.003, rate: 128.0/121.9718787057428426224
+      16.times do
+        a = amp_ramp.tick
+        puts a
+        control smpl_mlc, amp: a
+        sleep 4 # Mod: overlap 48, 24, in sequence 64
+      end
+    end
+  end
+  
+  live_loop :vocal_mlc_fraction, auto_cue: false do
+    
+    sync :set
+    
+    if (get :run_vocal_mlc_fraction) then
+      
+      with_fx :ixi_techno, phase: 0.2, mix: 0.5 do
+        sample smpl_mylive_chorus, amp: 0.8, rate: 128.0/121.9718787057428426224, start: 0.003, finish: 0.1, hpf: 90
+      end
+      sleep 3
+    end
+  end
+  
+  live_loop :vocal_sosha_inside, auto_cue: false do
+    sync :quad_set
+    
+    #tick_reset_all; puts 'Tick reset'
+    
+    if (get :run_vocal_sosha_inside) then
+      
+      a = 0.4
+      #a = line(0, 0.8, steps: 10).ramp.tick # with tick_reset
+      #puts a
+      
+      co_ramp = line(40, 110, steps: 10).mirror # Mod: comment in/out
+      co = co_ramp.tick
+      co = 40
+      puts co
+      
+      # Mod: hpf: 90, lpf: 70
+      
+      comment do
+        smpl_inside_vs1 = sample smpl_inside_verse1, amp: a, hpf: co
+        16.times do
+          sleep 3 # Mod: overlap 24, in sequence 48
+          co = co_ramp.tick
+          puts co
+          control smpl_inside_vs1, hpf: co
+        end
+      end # comment
+      
+      comment do
+        sample smpl_inside_pre, amp: a, hpf: co
+        sleep 24 # Mod: overlap 48, 24, in sequence 64
+      end #comment
+      
+      uncomment do
+        with_fx :flanger do
+          smpl_ic = sample smpl_inside_chorus, amp: a, hpf: co
+          16.times do
+            sleep 4 # Mod: overlap 24, in sequence 48
+            co = co_ramp.tick
+            puts co
+            control smpl_ic, hpf: co
+          end
+        end
+      end #comment
+      
+      comment do
+        with_fx :lpf, cutoff: 80 do
+          with_fx :autotuner do |c|
+            sample smpl_inside_chorus, amp: a, start: 0.0
+            #sleep 48 # Mod: overlap 24, in sequence 48
+            
+            48.times do
+              # now start changing note: to get robot voice behaviour
+              control c, note: (scale :a2, :minor_pentatonic, num_octaves: 0.5).choose
+              sleep 1
+            end
+          end
+        end
+      end # comment
+    end
+  end
+  
+end

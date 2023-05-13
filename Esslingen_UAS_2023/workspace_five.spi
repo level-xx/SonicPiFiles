@@ -1,0 +1,19 @@
+# Misc
+
+use_bpm get[:bpm]
+use_debug false
+
+smpl_crowd_cheer = load_sample "~/music/sonic_pi/samples/freesound/193062__soundslikewillem__crowd-in-anticipation-of-show_trimmed.wav"
+
+with_fx :reverb, mix: 0.6 do
+  
+  live_loop :crowd_cheer, auto_cue: false do
+    
+    if (get :run_crowd_cheer) then
+      
+      sample smpl_crowd_cheer, amp: 0.7, attack: 0.55, start: 0.4
+      set :run_crowd_cheer, false
+    end
+    sleep 1
+  end
+end

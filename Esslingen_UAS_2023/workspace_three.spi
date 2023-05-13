@@ -1,0 +1,132 @@
+# Melody
+use_bpm get[:bpm]
+use_debug false
+
+cscale = scale(:a0, :major, num_octaves: 2)
+puts cscale
+
+notes = [cscale[7], cscale[4], cscale[3], cscale[4]].ring
+#notes = [cscale[7], cscale[6], cscale[4], cscale[4]].ring
+#notes = [cscale[7], cscale[9], cscale[6], cscale[7]].ring
+
+with_fx :reverb, mix: 0.6 do
+  
+  live_loop :arp, auto_cue: false do
+    
+    sync :set
+    
+    #tick_reset_all; puts 'Tick reset'
+    
+    if (get :run_arp) then
+      
+      a = 0.3
+      r = 0.25
+      c = 60
+      p = 0
+      
+      use_random_seed 20434
+      use_random_seed 32424
+      #use_random_seed 50020
+      
+      a = line(0, 0.8, steps: 100).ramp.look # with tick_reset
+      r = line(0.25, 0.5, steps: 128).shuffle.look # Mod: shuffle, mirror
+      p = line(-0.8, 0.8, steps: 128).mirror.look # Mod: comment in/out
+      use_synth :sine # Mod: saw, sine, tri, pulse
+      use_octave 0
+      arp_notes = (scale :a3, :minor_pentatonic).shuffle
+      16.times do |i|
+        tick
+        c = line(60, 90, steps: 128).mirror.tick(:cutoff)
+        #puts c
+        play arp_notes.look, amp: a, cutoff: c, release: r, pan: p
+        unless (i==15)
+          sleep 0.25
+        end
+      end
+    end
+  end
+  
+  live_loop :squelch, auto_cue: false do
+    
+    sync :set
+    
+    if (get :run_squelch) then
+      
+      use_random_seed 43302
+      use_random_seed 54402
+      #use_random_seed 633029
+      
+      a = 0.5
+      r = 0.25
+      
+      #tick_reset_all
+      a = line(0, 0.5, steps: 100).ramp.look # with tick_reset
+      puts a
+      
+      squelch_rings = ring(
+        ring(:d1, :d2, :d3),
+        ring(:e1, :e2, :e3),
+        ring(:f1, :f2, :f3),
+        ring(:g1, :g2, :g3),
+        ring(:a1, :a2, :a3),
+        ring(:b1, :b2, :b3)
+      ).shuffle
+      
+      use_synth :piano # Mod: tb303, prophet, piano (n+12/n+24, no cutoff, r: 0.5)
+      
+      squelch_ring = squelch_rings.tick
+      
+      16.times do |i|
+        n= squelch_ring.tick
+        play n+24, release: r, cutoff: rrand(70, 80), res: 0.9, wave: 1, amp: a
+        #play n+24, release: r, amp: a # Mod: tb303, piano
+        
+        unless (i==15)
+          sleep 0.25
+        end
+      end
+    end
+  end
+  
+  live_loop :steps, auto_cue: false do
+    
+    sync :set
+    
+    if (get :run_steps) then
+      
+      a = 0.6
+      use_synth :winwood_lead # Mod: sine (amp: 0.4), tb303 (rel: 0.2), zawa (cutoff 90-100, amp: 0.2), subpulse, gabberkick (amp: 0.8), winwood_lead (amp: 0.8)
+      8.times do |i|
+        notes = [81, 77, 74, 71].shuffle
+        use_octave 0
+        play notes.tick, attack: 0.1, sustain: 0, release: 0.2, amp: a, cutoff: 80 if !one_in(6)
+        unless (i==7)
+          sleep 0.5
+        end
+      end
+    end
+  end
+  
+  live_loop :piano_hammer, auto_cue: false do
+    
+    sync :set
+    
+    if (get :run_piano_hammer) then
+      
+      a = 0.8
+      use_synth :winwood_lead # Mod: piano (octave: 1-2, amp: 1.2), a winwood_lead (a: 0.8, octave: 2,3)
+      use_octave 2
+      play_chord chord(notes.tick, :major), amp: a
+      synth :fm, note: notes.look, amp: a
+      sleep 1
+      play_chord chord(notes.look, :major), amp: a
+      synth :fm, note: notes.look, amp: a
+      sleep 1.5
+      play_chord chord(notes.look, :major), amp: a
+      synth :fm, note: notes.look, amp: a
+      sleep 1
+      play_chord chord(notes.look, :major), amp: a
+      synth :fm, note: notes.look, amp: a
+    end
+  end
+end
